@@ -1,0 +1,6 @@
+## Interface: 70000
+## Version: 1.0
+## Title: NameplateColors
+## Notes: Shows class colors on player nameplates and names
+
+NameplateColors.lua
