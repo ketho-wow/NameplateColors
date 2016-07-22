@@ -11,6 +11,10 @@ C_Timer.After(.1, function() -- wait and override any enabled cvar
 end)
 
 local CLASS_COLORS = CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS
+local pvp = {
+	Alliance = "\124TInterface/PVPFrame/PVP-Currency-Alliance:16\124t",
+	Horde = "\124TInterface/PVPFrame/PVP-Currency-Horde:16\124t",
+}
 
 -- friendly/enemy nameplate name colors
 hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
@@ -25,10 +29,16 @@ hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
 		elseif frame.optionTable.colorNameBySelection then
 			-- color players without somehow affecting anything else
 			if UnitIsPlayer(frame.unit) then
+				local name = GetUnitName(frame.unit) -- dont include realm name asterisk for players from the same connected realm
+				local isPVP = UnitIsPVP(frame.unit) -- flagged for pvp
+				local faction = UnitFactionGroup(frame.unit)
+				
+				frame.name:SetText(isPVP and pvp[faction]..name or name)
+				-- an enemy could also be from the same faction in ffa/arena/duel
 				if UnitIsEnemy("player", frame.unit) then
 					local _, class = UnitClass(frame.unit)
 					local color = CLASS_COLORS[class]
-					frame.name:SetVertexColor(color.r, color.g, color.b) -- enemy, class color
+					frame.name:SetVertexColor(color.r, color.g, color.b) -- enemy, class colors
 				else
 					frame.name:SetVertexColor(1.0, 1.0, 1.0) -- friendly, white
 				end
