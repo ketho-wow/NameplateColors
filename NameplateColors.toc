@@ -1,6 +1,17 @@
 ## Interface: 70000
-## Version: 1.1.1
+## Version: v1.2.0
 ## Title: NameplateColors
 ## Notes: Shows class colors on player nameplates and names
+## Author: Ketho @ EU-Boulderfist
+## SavedVariables: NameplateColorsDB
+## OptionalDeps: Ace3
+## X-Embeds: Ace3
+
+#@no-lib-strip@
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+#@end-no-lib-strip@
 
 NameplateColors.lua

@@ -1,52 +1,259 @@
 -- Author: Ketho (EU-Boulderfist)
 -- License: Public Domain
 
--- friendly nameplate healthbar class colors
-DefaultCompactNamePlateFriendlyFrameOptions.useClassColors = true
+local NAME, S = ...
 
--- enemy nameplate healthbar hostile colors
-SetCVar("ShowClassColorInNameplate", 0)
-C_Timer.After(.1, function() -- wait and override any enabled cvar
-	DefaultCompactNamePlateEnemyFrameOptions.useClassColors = false
-end)
+local ACR = LibStub("AceConfigRegistry-3.0")
+local ACD = LibStub("AceConfigDialog-3.0")
+local db
 
-local CLASS_COLORS = CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS
-local pvp = {
-	Alliance = "\124TInterface/PVPFrame/PVP-Currency-Alliance:16\124t",
-	Horde = "\124TInterface/PVPFrame/PVP-Currency-Horde:16\124t",
+local defaults = {
+	db_version = 1.0,
+	size = 1,
+	
+	friendlynameplate = true,
+	friendlynameplatecolor = {r=.34, g=.64, b=1},
+	friendlynamecolor = {r=1, g=1, b=1},
+	
+	enemynameplatecolor = {r=.75, g=.05, b=.05},
+	enemyname = true,
+	enemynamecolor = {r=1, g=0, b=0},
 }
 
--- friendly/enemy nameplate name colors
-hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
-	if not ShouldShowName(frame) then
-		frame.name:Hide()
-	else
-		-- dont include realm name asterisk for players from the same connected realm
-		local name = GetUnitName(frame.unit)
-		frame.name:SetText(name)
+-- bad habit of using that variable for the addon name
+local nameLower = _G.NAME
+if GetLocale() ~= "deDE" then
+	nameLower = nameLower:lower()
+end
 
-		if CompactUnitFrame_IsTapDenied(frame) then
-			-- Use grey if not a player and can't get tap on unit
-			frame.name:SetVertexColor(.5, .5, .5)
-		elseif frame.optionTable.colorNameBySelection then
-			-- color players without somehow affecting anything else
-			if UnitIsPlayer(frame.unit) then
-				local isPVP = UnitIsPVP(frame.unit) -- flagged for pvp
-				local faction = UnitFactionGroup(frame.unit)
-				frame.name:SetText((isPVP and faction) and pvp[faction]..name or name)
-				-- an enemy could also be from the same faction in ffa/arena/duel
-				if UnitIsEnemy("player", frame.unit) then
+local checkboxNames = {
+	friendlynameplate = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_FRIENDS,
+	friendlyname = FRIENDLY.." "..nameLower,
+	enemynameplate = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_ENEMIES,
+	enemyname = ENEMY.." "..nameLower,
+}
+
+local function GetValue(i)
+	return db[i[#i]]
+end
+
+local function SetValue(i, v)
+	db[i[#i]] = v
+	NamePlateDriverFrame:UpdateNamePlateOptions()
+end
+
+local function GetValueColor(i)
+	local c = db[i[#i]]
+	return c.r, c.g, c.b
+end
+
+local function SetValueColor(i, r, g, b)
+	local c = db[i[#i]]
+	c.r, c.g, c.b = r, g, b
+	NamePlateDriverFrame:UpdateNamePlateOptions()
+end
+
+local function GetName(i)
+	return db[i[#i]] and checkboxNames[i[#i]] or format("|cff808080%s|r", checkboxNames[i[#i]])
+end
+
+local function ColorHidden(i)
+	return db[i[#i]:gsub("color", "")]
+end
+
+local function SetNameplateSize(v)
+	if not InCombatLockdown() then
+		SetCVar("NamePlateHorizontalScale", v)
+		SetCVar("NamePlateVerticalScale", v > 1 and (v*4.25 - 3.25) or v) -- {1;1}, {1.4;2.7}
+		-- make sure this corresponds to our option, otherwise our option gets reset
+		InterfaceOptionsNamesPanelUnitNameplatesMakeLarger.value = v > 1 and "1" or "0"
+		NamePlateDriverFrame:UpdateNamePlateOptions()
+	end
+end
+
+local options = {
+	type = "group",
+	name = format("%s |cffADFF2F%s|r", NAME, GetAddOnMetadata(NAME, "Version")),
+	args = {
+		classcolors = {
+			type = "group", order = 1,
+			name = " "..CLASS_COLORS,
+			inline = true,
+			args = {
+				friendlynameplate = {
+					type = "toggle", order = 1, desc = SHOW_CLASS_COLOR_IN_V_KEY,
+					name = GetName,
+					get = GetValue,
+					set = function(i, v)
+						DefaultCompactNamePlateFriendlyFrameOptions.useClassColors = v
+						SetValue(i, v)
+					end,
+				},
+				friendlynameplatecolor = {
+					type = "color", order = 2, descStyle = "",
+					name = COLOR,
+					get = GetValueColor,
+					set = SetValueColor,
+					hidden = ColorHidden,
+				},
+				newline1 = {type = "description", order = 3, name = ""},
+				friendlyname = {
+					type = "toggle", order = 4, descStyle = "",
+					name = GetName,
+					get = GetValue,
+					set = SetValue,
+				},
+				friendlynamecolor = {
+					type = "color", order = 5, descStyle = "",
+					name = COLOR,
+					get = GetValueColor,
+					set = SetValueColor,
+					hidden = ColorHidden,
+				},
+				header = {type = "header", order = 6, name = ""},
+				enemynameplate = {
+					type = "toggle", order = 7, desc = SHOW_CLASS_COLOR_IN_V_KEY,
+					name = GetName,
+					get = GetValue,
+					set = function(i, v)
+						DefaultCompactNamePlateEnemyFrameOptions.useClassColors = v
+						SetValue(i, v)
+					end,
+				},
+				enemynameplatecolor = {
+					type = "color", order = 8, descStyle = "",
+					name = COLOR,
+					get = GetValueColor,
+					set = SetValueColor,
+					hidden = ColorHidden,
+				},
+				newline2 = {type = "description", order = 9, name = ""},
+				enemyname = {
+					type = "toggle", order = 10, descStyle = "",
+					name = GetName,
+					get = GetValue,
+					set = SetValue,
+				},
+				enemynamecolor = {
+					type = "color", order = 11, descStyle = "",
+					name = COLOR,
+					get = GetValueColor,
+					set = SetValueColor,
+					hidden = ColorHidden,
+				},
+			},
+		},
+		spacing1 = {type = "description", order = 2, name = ""},
+		size = {
+			type = "range", order = 3,
+			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
+			name = UNIT_NAMEPLATES_MAKE_LARGER,
+			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
+			set = function(i, v)
+				db.size = v
+				SetNameplateSize(v)
+			end,
+			min = .5, softMin = 1, softMax = 1.5, max = 2, step = .05,
+		},
+		spacing2 = {type = "description", order = 4, name = " "},
+		reset = {
+			type = "execute", order = 5,
+			width = "half", descStyle = "",
+			name = RESET,
+			confirm = true, confirmText = RESET_TO_DEFAULT.."?",
+			func = function()
+				NameplateColorsDB = CopyTable(defaults)
+				db = NameplateColorsDB
+				SetNameplateSize(1)
+			end,
+		},
+	},
+}
+
+local f = CreateFrame("Frame")
+
+function f:OnEvent(event, addon)
+	if addon == NAME then
+		if not NameplateColorsDB or NameplateColorsDB.db_version < defaults.db_version then
+			NameplateColorsDB = CopyTable(defaults)
+		end
+		db = NameplateColorsDB
+		
+		ACR:RegisterOptionsTable(NAME, options)
+		ACD:AddToBlizOptions(NAME, NAME)
+		ACD:SetDefaultSize(NAME, 420, 340)
+		
+		self:SetupNameplates()
+		self:UnregisterEvent(event)
+	end
+end
+
+function f:SetupNameplates()
+	local CLASS_COLORS = CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS
+	
+	local pvp = {
+		Alliance = "|TInterface/PVPFrame/PVP-Currency-Alliance:16|t",
+		Horde = "|TInterface/PVPFrame/PVP-Currency-Horde:16|t",
+	}
+
+	-- ignore the ShowClassColorInNameplate cvar
+	DefaultCompactNamePlateEnemyFrameOptions.useClassColors = db.enemynameplate
+	DefaultCompactNamePlateFriendlyFrameOptions.useClassColors = db.friendlynameplate
+	
+	-- names
+	hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
+		if ShouldShowName(frame) then
+			if frame.optionTable.colorNameBySelection then
+				if UnitIsPlayer(frame.unit) then
+					local name = GetUnitName(frame.unit)
+					local faction = UnitFactionGroup(frame.unit)
+					local icon = UnitIsPVP(frame.unit) and faction and pvp[faction] or ""
+					frame.name:SetText(icon..name)
+					
 					local _, class = UnitClass(frame.unit)
-					local color = CLASS_COLORS[class]
-					frame.name:SetVertexColor(color.r, color.g, color.b) -- enemy, class colors
-				else
-					frame.name:SetVertexColor(1, 1, 1) -- friendly, white
+					local reaction = (UnitIsEnemy("player", frame.unit) and "enemy" or "friendly").."name"
+					local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
+					frame.name:SetVertexColor(color.r, color.g, color.b)
 				end
-			elseif frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) then
-				frame.name:SetVertexColor(1, 0, 0)
-			else
-				frame.name:SetVertexColor(UnitSelectionColor(frame.unit, frame.optionTable.colorNameWithExtendedColors))
 			end
 		end
+	end)
+	
+	local playerName = UnitName("player")
+	
+	-- nameplates
+	hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+		-- dont color raid frames or Personal Resource Display
+		if not strfind(frame.unit, "nameplate") or UnitName(frame.unit) == playerName then return end
+		
+		if UnitIsPlayer(frame.unit) then
+			local _, class = UnitClass(frame.unit)
+			local reaction = (UnitIsEnemy("player", frame.unit) and "enemy" or "friendly").."nameplate"
+			local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
+			local r, g, b = color.r, color.g, color.b
+			
+			if r ~= frame.healthBar.r or g ~= frame.healthBar.g or b ~= frame.healthBar.b then
+				frame.healthBar:SetStatusBarColor(r, g, b)
+				frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = r, g, b
+			end
+		end
+	end)
+	
+	-- only override the cvar when set through the Blizzard options
+	hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
+		SetNameplateSize(value == "1" and (db.size>1 and db.size or 1.4) or 1)
+	end)
+end
+
+f:RegisterEvent("ADDON_LOADED")
+f:SetScript("OnEvent", f.OnEvent)
+
+for i, v in pairs({"nc", "namecolors", "nameplatecolors"}) do
+	_G["SLASH_NAMEPLATECOLORS"..i] = "/"..v
+end
+
+function SlashCmdList.NAMEPLATECOLORS()
+	if not ACD.OpenFrames.NamePlateColors then
+		ACD:Open(NAME)
 	end
-end)
+end
