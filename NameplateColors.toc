@@ -1,5 +1,5 @@
 ## Interface: 70000
-## Version: v1.2.0
+## Version: v1.2.1
 ## Title: NameplateColors
 ## Notes: Shows class colors on player nameplates and names
 ## Author: Ketho @ EU-Boulderfist
