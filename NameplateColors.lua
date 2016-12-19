@@ -8,8 +8,9 @@ local ACD = LibStub("AceConfigDialog-3.0")
 local db
 
 local defaults = {
-	db_version = 1.0,
+	db_version = 1.1,
 	size = 1,
+	pvpicon = true,
 	
 	friendlynameplate = true,
 	friendlynameplatecolor = {r=.34, g=.64, b=1},
@@ -156,8 +157,14 @@ local options = {
 			min = .5, softMin = 1, softMax = 1.5, max = 2, step = .05,
 		},
 		spacing2 = {type = "description", order = 4, name = " "},
+		pvpicon = {
+			type = "toggle", order = 5, desc = "|TInterface/PVPFrame/PVP-Currency-Alliance:24|t |TInterface/PVPFrame/PVP-Currency-Horde:24|t",
+			name = PVP.." "..EMBLEM_SYMBOL,
+			get = GetValue,
+			set = SetValue,
+		},
 		reset = {
-			type = "execute", order = 5,
+			type = "execute", order = 6,
 			width = "half", descStyle = "",
 			name = RESET,
 			confirm = true, confirmText = RESET_TO_DEFAULT.."?",
@@ -207,7 +214,7 @@ function f:SetupNameplates()
 				if UnitIsPlayer(frame.unit) then
 					local name = GetUnitName(frame.unit)
 					local faction = UnitFactionGroup(frame.unit)
-					local icon = UnitIsPVP(frame.unit) and faction and pvp[faction] or ""
+					local icon = UnitIsPVP(frame.unit) and db.pvpicon and faction and pvp[faction] or ""
 					frame.name:SetText(icon..name)
 					
 					local _, class = UnitClass(frame.unit)
@@ -239,7 +246,7 @@ function f:SetupNameplates()
 		end
 	end)
 	
-	-- only override the cvar when set through the Blizzard options
+	-- override when set through the Blizzard options
 	hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
 		SetNameplateSize(value == "1" and (db.size>1 and db.size or 1.4) or 1)
 	end)
