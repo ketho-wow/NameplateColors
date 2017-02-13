@@ -34,13 +34,20 @@ local checkboxNames = {
 	enemyname = ENEMY.." "..nameLower,
 }
 
+local function UpdateNamePlates()
+	for i, frame in ipairs(C_NamePlate.GetNamePlates()) do
+		NamePlateDriverFrame:ApplyFrameOptions(frame, frame.namePlateUnitToken)
+		CompactUnitFrame_UpdateAll(frame.UnitFrame)
+	end
+end
+
 local function GetValue(i)
 	return db[i[#i]]
 end
 
 local function SetValue(i, v)
 	db[i[#i]] = v
-	NamePlateDriverFrame:UpdateNamePlateOptions()
+	UpdateNamePlates()
 end
 
 local function GetValueColor(i)
@@ -51,7 +58,7 @@ end
 local function SetValueColor(i, r, g, b)
 	local c = db[i[#i]]
 	c.r, c.g, c.b = r, g, b
-	NamePlateDriverFrame:UpdateNamePlateOptions()
+	UpdateNamePlates()
 end
 
 local function GetName(i)
@@ -68,7 +75,7 @@ local function SetNameplateSize(v)
 		SetCVar("NamePlateVerticalScale", v > 1 and (v*4.25 - 3.25) or v) -- {1;1}, {1.4;2.7}
 		-- make sure this corresponds to our option, otherwise our option gets reset
 		InterfaceOptionsNamesPanelUnitNameplatesMakeLarger.value = v > 1 and "1" or "0"
-		NamePlateDriverFrame:UpdateNamePlateOptions()
+		NamePlateDriverFrame:UpdateNamePlateOptions() -- taints
 	end
 end
 
@@ -85,10 +92,7 @@ local options = {
 					type = "toggle", order = 1, desc = SHOW_CLASS_COLOR_IN_V_KEY,
 					name = GetName,
 					get = GetValue,
-					set = function(i, v)
-						DefaultCompactNamePlateFriendlyFrameOptions.useClassColors = v
-						SetValue(i, v)
-					end,
+					set = SetValue,
 				},
 				friendlynameplatecolor = {
 					type = "color", order = 2, descStyle = "",
@@ -116,10 +120,7 @@ local options = {
 					type = "toggle", order = 7, desc = SHOW_CLASS_COLOR_IN_V_KEY,
 					name = GetName,
 					get = GetValue,
-					set = function(i, v)
-						DefaultCompactNamePlateEnemyFrameOptions.useClassColors = v
-						SetValue(i, v)
-					end,
+					set = SetValue,
 				},
 				enemynameplatecolor = {
 					type = "color", order = 8, descStyle = "",
@@ -171,6 +172,7 @@ local options = {
 			func = function()
 				NameplateColorsDB = CopyTable(defaults)
 				db = NameplateColorsDB
+				UpdateNamePlates()
 				SetNameplateSize(1)
 			end,
 		},
@@ -202,10 +204,6 @@ function f:SetupNameplates()
 		Alliance = "|TInterface/PVPFrame/PVP-Currency-Alliance:16|t",
 		Horde = "|TInterface/PVPFrame/PVP-Currency-Horde:16|t",
 	}
-
-	-- ignore the ShowClassColorInNameplate cvar
-	DefaultCompactNamePlateEnemyFrameOptions.useClassColors = db.enemynameplate
-	DefaultCompactNamePlateFriendlyFrameOptions.useClassColors = db.friendlynameplate
 	
 	-- names
 	hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
@@ -238,11 +236,7 @@ function f:SetupNameplates()
 			local reaction = (UnitIsEnemy("player", frame.unit) and "enemy" or "friendly").."nameplate"
 			local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
 			local r, g, b = color.r, color.g, color.b
-			
-			if r ~= frame.healthBar.r or g ~= frame.healthBar.g or b ~= frame.healthBar.b then
-				frame.healthBar:SetStatusBarColor(r, g, b)
-				frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = r, g, b
-			end
+			frame.healthBar:SetStatusBarColor(r, g, b)
 		end
 	end)
 	
