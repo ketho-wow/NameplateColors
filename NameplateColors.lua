@@ -21,6 +21,13 @@ local defaults = {
 	enemynamecolor = {r=1, g=0, b=0},
 }
 
+-- 7.2: protected friendly nameplates dungeons/raids
+local instanceType
+local restricted = {
+	party = true,
+	raid = true,
+}
+
 -- bad habit of using that variable for the addon name
 local nameLower = _G.NAME
 if GetLocale() ~= "deDE" then
@@ -181,19 +188,23 @@ local options = {
 
 local f = CreateFrame("Frame")
 
-function f:OnEvent(event, addon)
-	if addon == NAME then
-		if not NameplateColorsDB or NameplateColorsDB.db_version < defaults.db_version then
-			NameplateColorsDB = CopyTable(defaults)
+function f:OnEvent(event, ...)
+	if event == "PLAYER_ENTERING_WORLD" then
+		instanceType = select(2, IsInInstance())
+	elseif event == "ADDON_LOADED" then
+		if ... == NAME then
+			if not NameplateColorsDB or NameplateColorsDB.db_version < defaults.db_version then
+				NameplateColorsDB = CopyTable(defaults)
+			end
+			db = NameplateColorsDB
+			
+			ACR:RegisterOptionsTable(NAME, options)
+			ACD:AddToBlizOptions(NAME, NAME)
+			ACD:SetDefaultSize(NAME, 420, 340)
+			
+			self:SetupNameplates()
+			self:UnregisterEvent(event)
 		end
-		db = NameplateColorsDB
-		
-		ACR:RegisterOptionsTable(NAME, options)
-		ACD:AddToBlizOptions(NAME, NAME)
-		ACD:SetDefaultSize(NAME, 420, 340)
-		
-		self:SetupNameplates()
-		self:UnregisterEvent(event)
 	end
 end
 
@@ -207,6 +218,8 @@ function f:SetupNameplates()
 	
 	-- names
 	hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
+		if restricted[instanceType] then return end
+		
 		if ShouldShowName(frame) then
 			if frame.optionTable.colorNameBySelection then
 				if UnitIsPlayer(frame.unit) then
@@ -228,6 +241,7 @@ function f:SetupNameplates()
 	
 	-- nameplates
 	hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
+		if restricted[instanceType] then return end
 		-- dont color raid frames or Personal Resource Display
 		if not strfind(frame.unit, "nameplate") or UnitName(frame.unit) == playerName then return end
 		
@@ -246,6 +260,7 @@ function f:SetupNameplates()
 	end)
 end
 
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", f.OnEvent)
 

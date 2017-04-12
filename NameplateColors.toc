@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 ## Version: @project-version@
 ## Title: NameplateColors
 ## Notes: Shows class colors on player nameplates and names
