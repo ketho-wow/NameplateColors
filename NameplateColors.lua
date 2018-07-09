@@ -19,6 +19,9 @@ local defaults = {
 	enemynameplatecolor = {r=.75, g=.05, b=.05},
 	enemyname = true,
 	enemynamecolor = {r=1, g=0, b=0},
+	
+	friendlybar = true,
+	enemybar = true,
 }
 
 -- 7.2: protected friendly nameplates dungeons/raids
@@ -152,9 +155,30 @@ local options = {
 				},
 			},
 		},
-		spacing1 = {type = "description", order = 2, name = ""},
+		spacing1 = {type = "description", order = 2, name = " "},
+		bar = {
+			type = "group", order = 3,
+			name = " Health Bar",
+			inline = true,
+			get = GetValue,
+			set = SetValue,
+			args = {
+				friendlybar = {
+					type = "toggle", order = 1,
+					width = "double", descStyle = "",
+					name = FRIENDLY.." health bar",
+
+				},
+				enemybar = {
+					type = "toggle", order = 2,
+					width = "double", descStyle = "",
+					name = ENEMY.." health bar",
+				},
+			},
+		},
+		spacing2 = {type = "description", order = 4, name = " "},
 		size = {
-			type = "range", order = 3,
+			type = "range", order = 5,
 			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
 			name = UNIT_NAMEPLATES_MAKE_LARGER,
 			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
@@ -164,15 +188,16 @@ local options = {
 			end,
 			min = .5, softMin = 1, softMax = 1.5, max = 2, step = .05,
 		},
-		spacing2 = {type = "description", order = 4, name = " "},
+		spacing3 = {type = "description", order = 6, name = "\n"},
 		pvpicon = {
-			type = "toggle", order = 5, desc = "|TInterface/PVPFrame/PVP-Currency-Alliance:24|t |TInterface/PVPFrame/PVP-Currency-Horde:24|t",
+			type = "toggle", order = 7,
+			desc = "|TInterface/PVPFrame/PVP-Currency-Alliance:24|t |TInterface/PVPFrame/PVP-Currency-Horde:24|t",
 			name = PVP.." "..EMBLEM_SYMBOL,
 			get = GetValue,
 			set = SetValue,
 		},
 		reset = {
-			type = "execute", order = 6,
+			type = "execute", order = 8,
 			width = "half", descStyle = "",
 			name = RESET,
 			confirm = true, confirmText = RESET_TO_DEFAULT.."?",
@@ -200,7 +225,17 @@ function f:OnEvent(event, ...)
 			
 			ACR:RegisterOptionsTable(NAME, options)
 			ACD:AddToBlizOptions(NAME, NAME)
-			ACD:SetDefaultSize(NAME, 420, 340)
+			ACD:SetDefaultSize(NAME, 420, 480)
+			
+			-- need to be able to toggle bars, dirty hack because lazy af at the moment
+			C_Timer.After(1, function()
+				if GetCVar("nameplateShowOnlyNames") == "1" then
+					SetCVar("nameplateShowOnlyNames", 0)
+					if not InCombatLockdown() then
+						NamePlateDriverFrame:UpdateNamePlateOptions() -- taints
+					end
+				end
+			end)
 			
 			self:SetupNameplates()
 			self:UnregisterEvent(event)
@@ -245,13 +280,20 @@ function f:SetupNameplates()
 		-- dont color raid frames or Personal Resource Display
 		if not strfind(frame.unit, "nameplate") or UnitName(frame.unit) == playerName then return end
 		
+		local flag = UnitIsFriend("player", frame.unit) and "friendly" or "enemy"
+		
 		if UnitIsPlayer(frame.unit) then
 			local _, class = UnitClass(frame.unit)
-			local reaction = (UnitIsEnemy("player", frame.unit) and "enemy" or "friendly").."nameplate"
+			local reaction = flag.."nameplate"
 			local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
 			local r, g, b = color.r, color.g, color.b
 			frame.healthBar:SetStatusBarColor(r, g, b)
 		end
+		
+		-- can use nameplateShowOnlyNames but it controls both enemy and friendly
+		local alpha = db[flag.."bar"] and 1 or 0
+		frame.healthBar:SetAlpha(alpha) -- name-only option
+		frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
 	end)
 	
 	-- override when set through the Blizzard options
