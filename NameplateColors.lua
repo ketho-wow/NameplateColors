@@ -8,20 +8,19 @@ local ACD = LibStub("AceConfigDialog-3.0")
 local db
 
 local defaults = {
-	db_version = 1.1,
+	db_version = 1.2,
 	size = 1,
 	pvpicon = true,
 	
-	friendlynameplate = true,
+	friendlynameplate = 1,
 	friendlynameplatecolor = {r=.34, g=.64, b=1},
+	friendlyname = 2,
 	friendlynamecolor = {r=1, g=1, b=1},
 	
+	enemynameplate = 2,
 	enemynameplatecolor = {r=.75, g=.05, b=.05},
-	enemyname = true,
+	enemyname = 1,
 	enemynamecolor = {r=1, g=0, b=0},
-	
-	friendlybar = true,
-	enemybar = true,
 }
 
 -- 7.2: protected friendly nameplates dungeons/raids
@@ -29,19 +28,6 @@ local instanceType
 local restricted = {
 	party = true,
 	raid = true,
-}
-
--- bad habit of using that variable for the addon name
-local nameLower = _G.NAME
-if GetLocale() ~= "deDE" then
-	nameLower = nameLower:lower()
-end
-
-local checkboxNames = {
-	friendlynameplate = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_FRIENDS,
-	friendlyname = FRIENDLY.." "..nameLower,
-	enemynameplate = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_ENEMIES,
-	enemyname = ENEMY.." "..nameLower,
 }
 
 local function UpdateNamePlates()
@@ -71,12 +57,8 @@ local function SetValueColor(i, r, g, b)
 	UpdateNamePlates()
 end
 
-local function GetName(i)
-	return db[i[#i]] and checkboxNames[i[#i]] or format("|cff808080%s|r", checkboxNames[i[#i]])
-end
-
 local function ColorHidden(i)
-	return db[i[#i]:gsub("color", "")]
+	return db[i[#i]:gsub("color", "")] ~= 2
 end
 
 local function SetNameplateSize(v)
@@ -93,90 +75,104 @@ local options = {
 	type = "group",
 	name = format("%s |cffADFF2F%s|r", NAME, GetAddOnMetadata(NAME, "Version")),
 	args = {
-		classcolors = {
+		friendly = {
 			type = "group", order = 1,
-			name = " "..CLASS_COLORS,
+			name = "|cff57A3FF"..FRIENDLY,
 			inline = true,
 			args = {
 				friendlynameplate = {
-					type = "toggle", order = 1, desc = SHOW_CLASS_COLOR_IN_V_KEY,
-					name = GetName,
+					type = "select", order = 1,
+					descStyle = "",
+					name = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_FRIENDS,
+					values = {
+						CLASS_COLORS,
+						FRIENDLY.." "..COLORS,
+						"|cffFF0000"..ADDON_DISABLED,
+					},
 					get = GetValue,
 					set = SetValue,
 				},
 				friendlynameplatecolor = {
-					type = "color", order = 2, descStyle = "",
-					name = COLOR,
+					type = "color", order = 2,
+					desc = FRIENDLY.." "..COLORS, width = "half",
+					name = " ",
 					get = GetValueColor,
 					set = SetValueColor,
 					hidden = ColorHidden,
 				},
-				newline1 = {type = "description", order = 3, name = ""},
+				spacing1 = {type = "description", order = 3, name = ""},
 				friendlyname = {
-					type = "toggle", order = 4, descStyle = "",
-					name = GetName,
+					type = "select", order = 4,
+					descStyle = "",
+					name = FRIENDLY.." "..NAMES_LABEL,
+					values = {
+						CLASS_COLORS,
+						FRIENDLY.." "..COLORS,
+					},
 					get = GetValue,
 					set = SetValue,
 				},
 				friendlynamecolor = {
-					type = "color", order = 5, descStyle = "",
-					name = COLOR,
+					type = "color", order = 5,
+					desc = FRIENDLY.." "..COLORS, width = "half",
+					name = " ",
 					get = GetValueColor,
 					set = SetValueColor,
 					hidden = ColorHidden,
 				},
-				header = {type = "header", order = 6, name = ""},
+				spacing2 = {type = "description", order = 6, name = " "},
+			},
+		},
+		spacing1 = {type = "description", order = 2, name = " "},
+		enemy = {
+			type = "group", order = 3,
+			name = "|cffBF0D0D"..ENEMY,
+			inline = true,
+			args = {
 				enemynameplate = {
-					type = "toggle", order = 7, desc = SHOW_CLASS_COLOR_IN_V_KEY,
-					name = GetName,
+					type = "select", order = 1,
+					descStyle = "",
+					name = OPTION_TOOLTIP_UNIT_NAMEPLATES_SHOW_ENEMIES,
+					values = {
+						CLASS_COLORS,
+						HOSTILE.." "..COLORS,
+						"|cffFF0000"..ADDON_DISABLED,
+					},
 					get = GetValue,
 					set = SetValue,
 				},
 				enemynameplatecolor = {
-					type = "color", order = 8, descStyle = "",
-					name = COLOR,
+					type = "color", order = 2,
+					desc = HOSTILE.." "..COLORS, width = "half",
+					name = " ",
 					get = GetValueColor,
 					set = SetValueColor,
 					hidden = ColorHidden,
 				},
-				newline2 = {type = "description", order = 9, name = ""},
+				spacing1 = {type = "description", order = 3, name = ""},
 				enemyname = {
-					type = "toggle", order = 10, descStyle = "",
-					name = GetName,
+					type = "select", order = 4,
+					descStyle = "",
+					name = ENEMY.." "..NAMES_LABEL,
+					values = {
+						CLASS_COLORS,
+						HOSTILE.." "..COLORS,
+					},
 					get = GetValue,
 					set = SetValue,
 				},
 				enemynamecolor = {
-					type = "color", order = 11, descStyle = "",
-					name = COLOR,
+					type = "color", order = 5,
+					desc = HOSTILE.." "..COLORS, width = "half",
+					name = " ",
 					get = GetValueColor,
 					set = SetValueColor,
 					hidden = ColorHidden,
 				},
+				spacing2 = {type = "description", order = 6, name = " "},
 			},
 		},
-		spacing1 = {type = "description", order = 2, name = " "},
-		bar = {
-			type = "group", order = 3,
-			name = " Health Bar",
-			inline = true,
-			get = GetValue,
-			set = SetValue,
-			args = {
-				friendlybar = {
-					type = "toggle", order = 1,
-					width = "double", descStyle = "",
-					name = FRIENDLY.." health bar",
-
-				},
-				enemybar = {
-					type = "toggle", order = 2,
-					width = "double", descStyle = "",
-					name = ENEMY.." health bar",
-				},
-			},
-		},
-		spacing2 = {type = "description", order = 4, name = " "},
+		spacing2 = {type = "description", order = 4, name = ""},
 		size = {
 			type = "range", order = 5,
 			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
@@ -225,7 +221,7 @@ function f:OnEvent(event, ...)
 			
 			ACR:RegisterOptionsTable(NAME, options)
 			ACD:AddToBlizOptions(NAME, NAME)
-			ACD:SetDefaultSize(NAME, 420, 480)
+			ACD:SetDefaultSize(NAME, 400, 490)
 			
 			-- need to be able to toggle bars, dirty hack because lazy af at the moment
 			C_Timer.After(1, function()
@@ -265,7 +261,7 @@ function f:SetupNameplates()
 					
 					local _, class = UnitClass(frame.unit)
 					local reaction = (UnitIsEnemy("player", frame.unit) and "enemy" or "friendly").."name"
-					local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
+					local color = db[reaction] == 1 and CLASS_COLORS[class] or db[reaction.."color"]
 					frame.name:SetVertexColor(color.r, color.g, color.b)
 				end
 			end
@@ -285,13 +281,13 @@ function f:SetupNameplates()
 		if UnitIsPlayer(frame.unit) then
 			local _, class = UnitClass(frame.unit)
 			local reaction = flag.."nameplate"
-			local color = db[reaction] and CLASS_COLORS[class] or db[reaction.."color"]
+			local color = db[reaction] == 1 and CLASS_COLORS[class] or db[reaction.."color"]
 			local r, g, b = color.r, color.g, color.b
 			frame.healthBar:SetStatusBarColor(r, g, b)
 		end
 		
 		-- can use nameplateShowOnlyNames but it controls both enemy and friendly
-		local alpha = db[flag.."bar"] and 1 or 0
+		local alpha = db[flag.."nameplate"] == 3 and 0 or 1
 		frame.healthBar:SetAlpha(alpha) -- name-only option
 		frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
 	end)

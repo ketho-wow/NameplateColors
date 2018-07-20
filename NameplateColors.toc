@@ -1,7 +1,7 @@
-## Interface: 70300
+## Interface: 80000
 ## Version: @project-version@
 ## Title: NameplateColors
-## Notes: Shows class colors on player nameplates and names
+## Notes: Colors friendly and enemy nameplates
 ## Author: Ketho @ EU-Boulderfist
 ## SavedVariables: NameplateColorsDB
 ## OptionalDeps: Ace3
