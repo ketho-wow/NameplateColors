@@ -8,8 +8,10 @@ local ACD = LibStub("AceConfigDialog-3.0")
 local db
 
 local defaults = {
-	db_version = 1.2,
-	size = 1,
+	db_version = 1.3,
+	
+	nameplatesize = 1,
+	namesize = 10,
 	pvpicon = true,
 	
 	friendlynameplate = 1,
@@ -28,6 +30,15 @@ local instanceType
 local restricted = {
 	party = true,
 	raid = true,
+}
+
+-- only the fixed size fonts seem to be used
+-- dont see any blizzard options for controlling useFixedSizeFont
+local fonts = {
+	SystemFont_NamePlate,
+	SystemFont_LargeNamePlate,
+	SystemFont_NamePlateFixed,
+	SystemFont_LargeNamePlateFixed,
 }
 
 local function UpdateNamePlates()
@@ -68,6 +79,12 @@ local function SetNameplateSize(v)
 		-- make sure this corresponds to our option, otherwise our option gets reset
 		InterfaceOptionsNamesPanelUnitNameplatesMakeLarger.value = v > 1 and "1" or "0"
 		NamePlateDriverFrame:UpdateNamePlateOptions() -- taints
+	end
+end
+
+local function SetFontSize(v)
+	for _, fontobject in pairs(fonts) do
+		fontobject:SetFont("Fonts/FRIZQT__.TTF", v)
 	end
 end
 
@@ -123,7 +140,7 @@ local options = {
 				spacing2 = {type = "description", order = 6, name = " "},
 			},
 		},
-		spacing1 = {type = "description", order = 2, name = " "},
+		spacing1 = {type = "description", order = 2, name = ""},
 		enemy = {
 			type = "group", order = 3,
 			name = "|cffBF0D0D"..ENEMY,
@@ -173,35 +190,49 @@ local options = {
 			},
 		},
 		spacing2 = {type = "description", order = 4, name = ""},
-		size = {
+		nameplatesize = {
 			type = "range", order = 5,
 			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
 			name = UNIT_NAMEPLATES_MAKE_LARGER,
 			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
 			set = function(i, v)
-				db.size = v
+				db.nameplatesize = v
 				SetNameplateSize(v)
 			end,
 			min = .5, softMin = 1, softMax = 1.5, max = 2, step = .05,
 		},
-		spacing3 = {type = "description", order = 6, name = "\n"},
+		spacing3 = {type = "description", order = 6, name = " "},
+		namesize = {
+			type = "range", order = 7,
+			width = "double",
+			name = FONT_SIZE,
+			get = GetValue,
+			set = function(i, v)
+				db.namesize = v
+				SetFontSize(v)
+			end,
+			min = 1, softMin = 8, softMax = 24, max = 32, step = 1,
+		},
+		spacing4 = {type = "description", order = 8, name = "\n"},
 		pvpicon = {
-			type = "toggle", order = 7,
+			type = "toggle", order = 9,
 			desc = "|TInterface/PVPFrame/PVP-Currency-Alliance:24|t |TInterface/PVPFrame/PVP-Currency-Horde:24|t",
 			name = PVP.." "..EMBLEM_SYMBOL,
 			get = GetValue,
 			set = SetValue,
 		},
 		reset = {
-			type = "execute", order = 8,
+			type = "execute", order = 10,
 			width = "half", descStyle = "",
 			name = RESET,
 			confirm = true, confirmText = RESET_TO_DEFAULT.."?",
 			func = function()
 				NameplateColorsDB = CopyTable(defaults)
 				db = NameplateColorsDB
+				
+				SetNameplateSize(defaults.nameplatesize)
+				SetFontSize(defaults.namesize)
 				UpdateNamePlates()
-				SetNameplateSize(1)
 			end,
 		},
 	},
@@ -221,7 +252,7 @@ function f:OnEvent(event, ...)
 			
 			ACR:RegisterOptionsTable(NAME, options)
 			ACD:AddToBlizOptions(NAME, NAME)
-			ACD:SetDefaultSize(NAME, 400, 490)
+			ACD:SetDefaultSize(NAME, 400, 530)
 			
 			-- need to be able to toggle bars, dirty hack because lazy af at the moment
 			C_Timer.After(1, function()
@@ -294,8 +325,10 @@ function f:SetupNameplates()
 	
 	-- override when set through the Blizzard options
 	hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
-		SetNameplateSize(value == "1" and (db.size>1 and db.size or 1.4) or 1)
+		SetNameplateSize(value == "1" and (db.nameplatesize>1 and db.nameplatesize or 1.4) or 1)
 	end)
+	
+	SetFontSize(db.namesize)
 end
 
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
