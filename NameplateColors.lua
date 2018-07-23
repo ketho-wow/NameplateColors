@@ -243,6 +243,8 @@ local f = CreateFrame("Frame")
 function f:OnEvent(event, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 		instanceType = select(2, IsInInstance())
+	elseif event == "ZONE_CHANGED_NEW_AREA" then
+		C_Timer.After(4, function() instanceType = select(2, IsInInstance()) end)
 	elseif event == "ADDON_LOADED" then
 		if ... == NAME then
 			if not NameplateColorsDB or NameplateColorsDB.db_version < defaults.db_version then
@@ -332,6 +334,7 @@ function f:SetupNameplates()
 end
 
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", f.OnEvent)
 
