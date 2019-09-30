@@ -6,6 +6,7 @@ local NAME, S = ...
 local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 local db
+local isClassic = (WOW_PROJECT_ID == WOW_PROJECT_CLASSIC)
 
 local defaults = {
 	db_version = 1.3,
@@ -191,7 +192,7 @@ local options = {
 		},
 		spacing2 = {type = "description", order = 4, name = ""},
 		nameplatesize = {
-			type = "range", order = 5,
+			type = "range", order = 5, hidden = isClassic,
 			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
 			name = UNIT_NAMEPLATES_MAKE_LARGER,
 			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
@@ -229,8 +230,9 @@ local options = {
 			func = function()
 				NameplateColorsDB = CopyTable(defaults)
 				db = NameplateColorsDB
-				
-				SetNameplateSize(defaults.nameplatesize)
+				if not isClassic then
+					SetNameplateSize(defaults.nameplatesize)
+				end
 				SetFontSize(defaults.namesize)
 				UpdateNamePlates()
 			end,
@@ -285,7 +287,8 @@ function f:SetupNameplates()
 		if restricted[instanceType] then return end
 		
 		if ShouldShowName(frame) then
-			if frame.optionTable.colorNameBySelection then
+			-- not sure anymore what colorNameBySelection is for in retail and why its disabled in classic
+			if isClassic or frame.optionTable.colorNameBySelection then
 				if UnitIsPlayer(frame.unit) then
 					local name = GetUnitName(frame.unit)
 					local faction = UnitFactionGroup(frame.unit)
@@ -322,14 +325,17 @@ function f:SetupNameplates()
 		-- can use nameplateShowOnlyNames but it controls both enemy and friendly
 		local alpha = db[flag.."nameplate"] == 3 and 0 or 1
 		frame.healthBar:SetAlpha(alpha) -- name-only option
-		frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
+		if not isClassic then
+			frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
+		end
 	end)
 	
 	-- override when set through the Blizzard options
-	hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
-		SetNameplateSize(value == "1" and (db.nameplatesize>1 and db.nameplatesize or 1.4) or 1)
-	end)
-	
+	if not isClassic then
+		hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
+			SetNameplateSize(value == "1" and (db.nameplatesize>1 and db.nameplatesize or 1.4) or 1)
+		end)
+	end
 	SetFontSize(db.namesize)
 end
 
