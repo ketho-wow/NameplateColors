@@ -1,6 +1,3 @@
--- Author: Ketho (EU-Boulderfist)
--- License: Public Domain
-
 local NAME, S = ...
 
 local ACR = LibStub("AceConfigRegistry-3.0")
