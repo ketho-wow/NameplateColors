@@ -11,10 +11,10 @@
 ## X-WoWI-ID: 24050
 
 #@no-lib-strip@
-#Libs\LibStub\LibStub.lua
-#Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-#Libs\AceGUI-3.0\AceGUI-3.0.xml
-#Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
 #@end-no-lib-strip@
 
 NameplateColors.lua
