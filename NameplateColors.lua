@@ -3,7 +3,7 @@ local NAME, S = ...
 local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 local db
-local isClassic = (WOW_PROJECT_ID == WOW_PROJECT_CLASSIC)
+local isRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE)
 
 local defaults = {
 	db_version = 1.3,
@@ -189,7 +189,7 @@ local options = {
 		},
 		spacing2 = {type = "description", order = 4, name = ""},
 		nameplatesize = {
-			type = "range", order = 5, hidden = isClassic,
+			type = "range", order = 5, hidden = not isRetail,
 			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
 			name = UNIT_NAMEPLATES_MAKE_LARGER,
 			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
@@ -227,7 +227,7 @@ local options = {
 			func = function()
 				NameplateColorsDB = CopyTable(defaults)
 				db = NameplateColorsDB
-				if not isClassic then
+				if isRetail then
 					SetNameplateSize(defaults.nameplatesize)
 				end
 				SetFontSize(defaults.namesize)
@@ -285,7 +285,7 @@ function f:SetupNameplates()
 		
 		if ShouldShowName(frame) then
 			-- not sure anymore what colorNameBySelection is for in retail and why its disabled in classic
-			if isClassic or frame.optionTable.colorNameBySelection then
+			if not isRetail or frame.optionTable.colorNameBySelection then
 				if UnitIsPlayer(frame.unit) then
 					local name = GetUnitName(frame.unit)
 					local faction = UnitFactionGroup(frame.unit)
@@ -315,20 +315,20 @@ function f:SetupNameplates()
 			local _, class = UnitClass(frame.unit)
 			local reaction = flag.."nameplate"
 			local color = db[reaction] == 1 and CLASS_COLORS[class] or db[reaction.."color"]
-			local r, g, b = color.r, color.g, color.b
+			local r, g, b = color.r, color.g, color.b	
 			frame.healthBar:SetStatusBarColor(r, g, b)
 		end
 		
 		-- can use nameplateShowOnlyNames but it controls both enemy and friendly
 		local alpha = db[flag.."nameplate"] == 3 and 0 or 1
 		frame.healthBar:SetAlpha(alpha) -- name-only option
-		if not isClassic then
+		if isRetail then
 			frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
 		end
 	end)
 	
 	-- override when set through the Blizzard options
-	if not isClassic then
+	if isRetail then
 		hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
 			SetNameplateSize(value == "1" and (db.nameplatesize>1 and db.nameplatesize or 1.4) or 1)
 		end)
