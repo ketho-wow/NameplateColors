@@ -282,7 +282,8 @@ function f:SetupNameplates()
 	-- names
 	hooksecurefunc("CompactUnitFrame_UpdateName", function(frame)
 		if restricted[instanceType] then return end
-		
+		if not strfind(frame.unit, "nameplate") then return end
+
 		if ShouldShowName(frame) then
 			-- not sure anymore what colorNameBySelection is for in retail and why its disabled in classic
 			if not isRetail or frame.optionTable.colorNameBySelection then
