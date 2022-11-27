@@ -70,19 +70,9 @@ local function ColorHidden(i)
 	return db[i[#i]:gsub("color", "")] ~= 2
 end
 
-local function SetNameplateSize(v)
-	if not InCombatLockdown() then
-		SetCVar("NamePlateHorizontalScale", v)
-		SetCVar("NamePlateVerticalScale", v > 1 and (v*4.25 - 3.25) or v) -- {1;1}, {1.4;2.7}
-		-- make sure this corresponds to our option, otherwise our option gets reset
-		InterfaceOptionsNamesPanelUnitNameplatesMakeLarger.value = v > 1 and "1" or "0"
-		NamePlateDriverFrame:UpdateNamePlateOptions() -- taints
-	end
-end
-
 local function SetFontSize(v)
 	for _, fontobject in pairs(fonts) do
-		fontobject:SetFont("Fonts/FRIZQT__.TTF", v)
+		fontobject:SetFont("Fonts/FRIZQT__.TTF", v, "")
 	end
 end
 
@@ -188,18 +178,6 @@ local options = {
 			},
 		},
 		spacing2 = {type = "description", order = 4, name = ""},
-		nameplatesize = {
-			type = "range", order = 5, hidden = not isRetail,
-			width = "double", desc = OPTION_TOOLTIP_UNIT_NAMEPLATES_MAKE_LARGER,
-			name = UNIT_NAMEPLATES_MAKE_LARGER,
-			get = function(i) return tonumber(GetCVar("NamePlateHorizontalScale")) end,
-			set = function(i, v)
-				db.nameplatesize = v
-				SetNameplateSize(v)
-			end,
-			min = .5, softMin = 1, softMax = 1.5, max = 2, step = .05,
-		},
-		spacing3 = {type = "description", order = 6, name = " "},
 		namesize = {
 			type = "range", order = 7,
 			width = "double",
@@ -227,9 +205,6 @@ local options = {
 			func = function()
 				NameplateColorsDB = CopyTable(defaults)
 				db = NameplateColorsDB
-				if isRetail then
-					SetNameplateSize(defaults.nameplatesize)
-				end
 				SetFontSize(defaults.namesize)
 				UpdateNamePlates()
 			end,
@@ -253,7 +228,7 @@ function f:OnEvent(event, ...)
 			
 			ACR:RegisterOptionsTable(NAME, options)
 			ACD:AddToBlizOptions(NAME, NAME)
-			ACD:SetDefaultSize(NAME, 400, 530)
+			ACD:SetDefaultSize(NAME, 400, 480)
 			
 			-- need to be able to toggle bars, dirty hack because lazy af at the moment
 			C_Timer.After(1, function()
@@ -327,13 +302,6 @@ function f:SetupNameplates()
 			frame.ClassificationFrame:SetAlpha(alpha) -- also hide that elite dragon icon
 		end
 	end)
-	
-	-- override when set through the Blizzard options
-	if isRetail then
-		hooksecurefunc(InterfaceOptionsNamesPanelUnitNameplatesMakeLarger, "setFunc", function(value)
-			SetNameplateSize(value == "1" and (db.nameplatesize>1 and db.nameplatesize or 1.4) or 1)
-		end)
-	end
 	SetFontSize(db.namesize)
 end
 

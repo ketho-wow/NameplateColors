@@ -1,6 +1,6 @@
-## Interface: 90207
+## Interface: 100002
+## Interface-Wrath: 30400
 ## Interface-Classic: 11403
-## Interface-BCC: 20504
 ## Version: @project-version@
 ## Title: NameplateColors
 ## Notes: Colors friendly and enemy nameplates
@@ -9,6 +9,7 @@
 ## OptionalDeps: Ace3
 ## X-Curse-Project-ID: 101116
 ## X-WoWI-ID: 24050
+## X-Wago-ID: rkGrPn6y
 
 #@no-lib-strip@
 Libs\LibStub\LibStub.lua
