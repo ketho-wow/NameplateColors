@@ -4,6 +4,7 @@ local ACR = LibStub("AceConfigRegistry-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
 local db
 local isRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE)
+local GetAddOnMetadata = GetAddOnMetadata or C_AddOns.GetAddOnMetadata
 
 local defaults = {
 	db_version = 1.3,
